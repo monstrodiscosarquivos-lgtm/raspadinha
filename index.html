@@ -73,6 +73,9 @@ h1.slab{font-size:clamp(34px, 10.5vw, 54px); margin:0; transform:rotate(-2deg)}
   background:var(--yellow); color:var(--ink); border:3px solid var(--cream); padding:12px 14px 8px; min-height:56px}
 .btn:active{transform:translateY(2px)}
 .fine{font-size:13px; color:var(--muted); margin:0}
+.passos{margin:2px 0 0; padding:12px 14px 12px 34px; background:rgba(244,235,220,.08); border-left:4px solid var(--yellow); font-size:15px; line-height:1.45; color:var(--cream)}
+.passos li{margin:0 0 6px} .passos li:last-child{margin:0}
+.passos b{color:var(--yellow); font-weight:700}
 .copy:focus-visible, .btn:focus-visible{outline:3px solid var(--yellow); outline-offset:3px}
 
 .erro{width:100%; background:var(--ink); padding:18px; display:flex; flex-direction:column; gap:12px; text-align:center}
@@ -158,6 +161,11 @@ footer span{color:var(--yellow)}
             <button class="copy" id="copiar" type="button">COPIAR</button>
           </div>
           <a class="btn" id="usar" href="https://lojamonstro.com.br/">USAR MEU DESCONTO</a>
+          <ol class="passos" id="passos" hidden>
+            <li>Toque em <b>USAR MEU DESCONTO</b>: a loja abre com o cupom já guardado neste aparelho.</li>
+            <li>Escolha seus discos e coloque no carrinho.</li>
+            <li>Na hora de pagar, o desconto já aparece sozinho. Se não aparecer, cole o código no campo <b>Cupom de desconto</b>: o botão também copia o código pra você.</li>
+          </ol>
           <p class="fine" id="regras"></p>
         </div>
       </section>
@@ -323,7 +331,8 @@ footer span{color:var(--yellow)}
       document.getElementById('premio-texto').textContent = d.t;
       document.getElementById('codigo').textContent = d.c;
       document.getElementById('usar').href = LOJA + '/discount/' + encodeURIComponent(d.c) + '?redirect_to=/';
-      document.getElementById('regras').textContent = (d.teste ? 'MODO TESTE: este cupom não vale na loja. ' : 'O botão abre a loja com o cupom já aplicado. ') +
+      document.getElementById('passos').hidden = false;
+      document.getElementById('regras').textContent = (d.teste ? 'MODO TESTE: este cupom não vale na loja. ' : 'Vai comprar em outro celular ou no computador? Use o código acima no campo de cupom. ') +
         'Cupom de uso único, válido até ' + d.v + ' no site lojamonstro.com.br.' + (d.min ? ' Pedido mínimo de R$ ' + String(d.min).replace('.', ',') + '.' : '');
     }
     cv.classList.add('gone'); result.hidden = false; guardar(CHAVE_LOCAL, '1');
@@ -339,6 +348,14 @@ footer span{color:var(--yellow)}
   ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(function(t){ stage.addEventListener(t, function(){ apertado = false; ultimo = null; }); });
   stage.addEventListener('touchmove', function(e){ e.preventDefault(); }, {passive: false});  // iOS: não rolar a página enquanto raspa
 
+  // Quem toca em USAR MEU DESCONTO também leva o código copiado (reserva, caso a loja não aplique sozinha)
+  document.getElementById('usar').addEventListener('click', function(e){
+    if (d.sem || !d.c || !navigator.clipboard) return;
+    var href = this.href, foi = false; e.preventDefault();
+    function ir(){ if (!foi){ foi = true; location.href = href; } }
+    try { navigator.clipboard.writeText(d.c).then(ir, ir); } catch (_) { ir(); }
+    setTimeout(ir, 600);
+  });
   document.getElementById('copiar').addEventListener('click', function(){
     var b = this;
     function ok(){ b.textContent = 'COPIADO'; setTimeout(function(){ b.textContent = 'COPIAR'; }, 1600); }
